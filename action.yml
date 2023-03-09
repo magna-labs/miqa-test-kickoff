@@ -51,7 +51,7 @@ runs:
       - if: steps.get_sha.outputs.parent_sha == 'null' 
         shell: bash
         run: |
-          echo "NEW_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "NEW_SHA=${{ toJSON(fromJSON(steps.fetch_sha.outputs.data).parents[0].sha) }}" >> $GITHUB_ENV
       - name: Fetch Check Suite
         id: fetch
         uses: octokit/request-action@v2.1.0
