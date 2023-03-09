@@ -44,13 +44,21 @@ runs:
         shell: bash
         id: get_sha
         run: echo "::set-output name=parent_sha::${{ toJSON(fromJSON(steps.fetch_sha.outputs.data).parents[1].sha) }}"
+      - if: steps.get_sha.outputs.parent_sha != 'null' 
+        shell: bash
+        run: |
+          echo "NEW_SHA=${{steps.get_sha.outputs.parent_sha}}" >> $GITHUB_ENV
+      - if: steps.get_sha.outputs.parent_sha == 'null' 
+        shell: bash
+        run: |
+          echo "NEW_SHA=${{ github.sha }}" >> $GITHUB_ENV
       - name: Fetch Check Suite
         id: fetch
         uses: octokit/request-action@v2.1.0
         with:
           route: GET /repos/{repo}/commits/{ref}/check-suites?app_id=240004
           repo: ${{ inputs.REPOSITORY }}
-          ref: ${{ steps.get_sha.outputs.parent_sha }}
+          ref: ${{ env.NEW_SHA }}
         env:
           GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       - name: Save Check Suite
