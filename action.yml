@@ -43,7 +43,10 @@ runs:
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ github.repository }}", "head_sha":"${{ github.sha  }}", "check_name":"${{inputs.CHECK_NAME}}"}'
       - name: Set Check Run ID
-        run: echo  "CHECK_RUN_ID=${{ fromJSON(fromJSON(toJSON(steps.trigger_1.outputs.response))).id }}" >> $GITHUB_ENV
+        shell: bash
+        id: set_check_run
+        run: |
+          echo  "CHECK_RUN_ID=${{ fromJSON(fromJSON(toJSON(steps.trigger_1.outputs.response))).id }}" >> $GITHUB_ENV
       - name: HTTP Request - Miqa Trigger
         uses: fjogeleit/http-request-action@v1.11.0
         with:
