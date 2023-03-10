@@ -1,6 +1,9 @@
 name: 'Miqa Test Kickoff'
 description: 'Kick off jobs on Miqa and status checks in GitHub'
 inputs:
+  INSTALLATION_ID:
+    description: 'App Installation ID for the miqa-status-check Github App'
+    required: true
   GITHUB_TOKEN:
     description: 'GitHub token'
     required: true
@@ -31,57 +34,20 @@ inputs:
 runs:
   using: "composite"
   steps:
-      - name: Fetch commit SHA
-        id: fetch_sha
-        uses: octokit/request-action@v2.1.0
+      - name: HTTP Request - Create Check Run
+        uses: fjogeleit/http-request-action@v1.11.0
+        id: trigger_1
         with:
-          route: GET /repos/{repo}/commits/{sha}
-          repo: ${{ inputs.REPOSITORY }}
-          sha: ${{ inputs.SHA }}
-        env:
-          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      - name: Save commit SHA
-        shell: bash
-        id: get_sha
-        run: echo "::set-output name=parent_sha::${{ toJSON(fromJSON(steps.fetch_sha.outputs.data).parents[1].sha) }}"
-      - if: steps.get_sha.outputs.parent_sha != 'null' 
-        shell: bash
-        run: |
-          echo "NEW_SHA=${{steps.get_sha.outputs.parent_sha}}" >> $GITHUB_ENV
-      - if: steps.get_sha.outputs.parent_sha == 'null' 
-        shell: bash
-        run: |
-          echo "NEW_SHA=${{ toJSON(fromJSON(steps.fetch_sha.outputs.data).parents[0].sha) }}" >> $GITHUB_ENV
-      - name: Fetch Check Suite
-        id: fetch
-        uses: octokit/request-action@v2.1.0
-        with:
-          route: GET /repos/{repo}/commits/{ref}/check-suites?app_id=240004
-          repo: ${{ inputs.REPOSITORY }}
-          ref: ${{ env.NEW_SHA }}
-        env:
-          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      - name: Save Check Suite
-        shell: bash
-        id: get_suite
-        run: echo "::set-output name=check_suite::${{ toJSON(fromJSON(steps.fetch.outputs.data).check_suites[0].id) }}"
-      - name: Fetch Check Run IDs
-        id: fetch_run_ids
-        uses: octokit/request-action@v2.1.0
-        with:
-          route: GET /repos/{repo}/check-suites/{check_suite_id}/check-runs
-          repo: ${{ inputs.REPOSITORY }}
-          check_suite_id: ${{ steps.get_suite.outputs.check_suite }}
-        env:
-          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-      - name: Save Check Run IDs
-        shell: bash
-        id: get_check_run
-        run: echo "::set-output name=check_run_id::${{ toJSON(fromJSON(steps.fetch_run_ids.outputs.data).check_runs[0].id) }}"
+          url: 'http://miqa-github.herokuapp.com/create_check_manual'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ github.repository }}", "head_sha":"${{ github.sha  }}", "check_name":"${{inputs.CHECK_NAME}}"}'
+      - name: Set Check Run ID
+        run: echo  "CHECK_RUN_ID=${{ fromJSON(fromJSON(toJSON(steps.trigger_1.outputs.response))).id }}" >> $GITHUB_ENV
       - name: HTTP Request - Miqa Trigger
         uses: fjogeleit/http-request-action@v1.11.0
         with:
-          url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ steps.get_check_run.outputs.check_run_id }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
+          url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ env.CHECK_RUN_ID }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"repo":"${{ inputs.REPOSITORY }}", "commit":"${{ inputs.SHA }}"}'
