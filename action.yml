@@ -31,6 +31,10 @@ inputs:
     description: 'Additional custom instructions to pass as query parameters to the trigger. Prefix with &.'
     required: false
     default: ''
+  MIQA_GITHUB_APP:
+    description: 'Base URL for Miqa GitHub App'
+    required: false
+    default: 'http://miqa-github.herokuapp.com'
 runs:
   using: "composite"
   steps:
@@ -59,7 +63,7 @@ runs:
         uses: fjogeleit/http-request-action@v1.11.0
         id: trigger_1
         with:
-          url: 'http://miqa-github.herokuapp.com/create_check_manual'
+          url: '${{inputs.MIQA_GITHUB_APP}}/create_check_manual'
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ inputs.REPOSITORY }}", "head_sha":"${{ env.NEW_SHA  }}", "check_name":"${{inputs.CHECK_NAME}}", "gha_version":"1.1.1"}'
