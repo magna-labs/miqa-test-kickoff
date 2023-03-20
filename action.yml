@@ -76,7 +76,7 @@ runs:
       - name: HTTP Request - Miqa Trigger
         uses: fjogeleit/http-request-action@v1.11.0
         with:
-          url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ env.CHECK_RUN_ID }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&gha_version=${{GITHUB_ACTION_PATH}}&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
+          url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ env.CHECK_RUN_ID }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&gha_version=1.1.2&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
           method: 'POST'
           timeout: 30000
           customHeaders: '{"Content-Type": "application/json"}'
