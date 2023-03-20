@@ -65,6 +65,7 @@ runs:
         with:
           url: '${{inputs.MIQA_GITHUB_APP}}/create_check_manual'
           method: 'POST'
+          timeout: 30000
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ inputs.REPOSITORY }}", "head_sha":"${{ env.NEW_SHA  }}", "check_name":"${{inputs.CHECK_NAME}}", "gha_version":"1.1.1"}'
       - name: Set Check Run ID
@@ -77,5 +78,6 @@ runs:
         with:
           url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ env.CHECK_RUN_ID }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&gha_version=1.1.1&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
           method: 'POST'
+          timeout: 30000
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"repo":"${{ inputs.REPOSITORY }}", "commit":"${{ inputs.SHA }}"}'
