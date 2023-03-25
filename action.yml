@@ -55,7 +55,7 @@ runs:
         shell: bash
         run: |
           echo "NEW_SHA=${{steps.get_sha.outputs.parent_sha}}" >> $GITHUB_ENV
-      - if: ${{ github.event_name == 'pull_request' || steps.get_sha.outputs.parent_sha == 'null' }} 
+      - if: ${{ github.event_name != 'pull_request' || steps.get_sha.outputs.parent_sha == 'null' }} 
         shell: bash
         run: |
           echo "NEW_SHA=${{ inputs.SHA }}" >> $GITHUB_ENV
