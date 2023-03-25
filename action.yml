@@ -51,11 +51,11 @@ runs:
         shell: bash
         id: get_sha
         run: echo "::set-output name=parent_sha::${{ toJSON(fromJSON(steps.fetch_sha.outputs.data).parents[1].sha) }}"
-      - if: steps.get_sha.outputs.parent_sha != 'null' && ${{ github.event_name }} == 'pull_request'
+      - if: ${{ github.event_name == 'pull_request' && steps.get_sha.outputs.parent_sha != 'null' }}
         shell: bash
         run: |
           echo "NEW_SHA=${{steps.get_sha.outputs.parent_sha}}" >> $GITHUB_ENV
-      - if: steps.get_sha.outputs.parent_sha == 'null' 
+      - if: ${{ github.event_name == 'pull_request' || steps.get_sha.outputs.parent_sha == 'null' }} 
         shell: bash
         run: |
           echo "NEW_SHA=${{ inputs.SHA }}" >> $GITHUB_ENV
