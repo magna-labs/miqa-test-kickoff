@@ -51,7 +51,7 @@ runs:
         shell: bash
         id: get_sha
         run: echo "::set-output name=parent_sha::${{ toJSON(fromJSON(steps.fetch_sha.outputs.data).parents[1].sha) }}"
-      - if: steps.get_sha.outputs.parent_sha != 'null' 
+      - if: steps.get_sha.outputs.parent_sha != 'null' && ${{ github.event_name }} == 'pull_request'
         shell: bash
         run: |
           echo "NEW_SHA=${{steps.get_sha.outputs.parent_sha}}" >> $GITHUB_ENV
@@ -67,7 +67,7 @@ runs:
           method: 'POST'
           timeout: 30000
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ inputs.REPOSITORY }}", "head_sha":"${{ inputs.SHA  }}", "check_name":"${{inputs.CHECK_NAME}}", "gha_version":"1.1.2"}'
+          data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ inputs.REPOSITORY }}", "head_sha":"${{ env.NEW_SHA  }}", "check_name":"${{inputs.CHECK_NAME}}", "gha_version":"1.1.2"}'
       - name: Set Check Run ID
         shell: bash
         id: set_check_run
@@ -80,4 +80,4 @@ runs:
           method: 'POST'
           timeout: 30000
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"repo":"${{ inputs.REPOSITORY }}", "commit":"${{ inputs.SHA }}"}'
+          data: '{"repo":"${{ inputs.REPOSITORY }}", "commit":"${{ env.NEW_SHA }}"}'
