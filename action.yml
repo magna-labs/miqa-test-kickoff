@@ -12,7 +12,8 @@ inputs:
     required: true
   DOCKER_URI:
     description: 'Docker URI for version to test on'
-    required: true
+    required: false
+    default: ''
   MIQA_ENDPOINT:
     description: 'Root URL for Miqa (proxy or app domain)'
     required: true
