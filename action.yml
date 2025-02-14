@@ -45,7 +45,7 @@ runs:
   steps:
       - name: Fetch commit SHA
         id: fetch_sha
-        uses: octokit/request-action@v2.1.9
+        uses: octokit/request-action@main
         with:
           route: GET /repos/{repo}/commits/{sha}
         env:
