@@ -1,5 +1,6 @@
 name: 'Miqa Test Kickoff'
 description: 'Kick off jobs on Miqa and status checks in GitHub'
+
 inputs:
   INSTALLATION_ID:
     description: 'App Installation ID for the miqa-status-check Github App'
@@ -40,6 +41,7 @@ inputs:
     description: 'Base URL for Miqa GitHub App'
     required: false
     default: 'http://miqa-github.herokuapp.com'
+
 runs:
   using: "composite"
   steps:
@@ -59,11 +61,17 @@ runs:
       - if: ${{ github.event_name == 'pull_request' && steps.get_sha.outputs.parent_sha != 'null' }}
         shell: bash
         run: |
-          echo "NEW_SHA=${{steps.get_sha.outputs.parent_sha}}" >> $GITHUB_ENV
+          mkdir -p /tmp/miqa
+          echo "${{steps.get_sha.outputs.parent_sha}}" > /tmp/miqa/new_sha
       - if: ${{ github.event_name != 'pull_request' || steps.get_sha.outputs.parent_sha == 'null' }} 
         shell: bash
         run: |
-          echo "NEW_SHA=${{ inputs.SHA }}" >> $GITHUB_ENV
+          mkdir -p /tmp/miqa
+          echo "${{ inputs.SHA }}" > /tmp/miqa/new_sha
+      - name: Read NEW_SHA from file
+        id: read_new_sha
+        shell: bash
+        run: echo "value=$(cat /tmp/miqa/new_sha)" >> $GITHUB_OUTPUT
       - name: HTTP Request - Create Check Run
         uses: fjogeleit/http-request-action@v1.14.0
         id: trigger_1
@@ -72,18 +80,22 @@ runs:
           method: 'POST'
           timeout: 30000
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ inputs.REPOSITORY }}", "head_sha":"${{ env.NEW_SHA  }}", "check_name":"${{inputs.CHECK_NAME}}", "gha_version":"1.1.5"}'
+          data: '{"installation_id":"${{inputs.INSTALLATION_ID}}","repository_full_name":"${{ inputs.REPOSITORY }}", "head_sha":"${{ steps.read_new_sha.outputs.value }}", "check_name":"${{inputs.CHECK_NAME}}", "gha_version":"1.1.5"}'
       - name: Set Check Run ID
         shell: bash
         id: set_check_run
         run: |
-          echo  "CHECK_RUN_ID=${{ fromJSON(fromJSON(toJSON(steps.trigger_1.outputs.response))).id }}" >> $GITHUB_ENV
+          echo "${{ fromJSON(fromJSON(toJSON(steps.trigger_1.outputs.response))).id }}" > /tmp/miqa/check_run_id
+      - name: Read CHECK_RUN_ID from file
+        id: read_check_run_id
+        shell: bash
+        run: echo "value=$(cat /tmp/miqa/check_run_id)" >> $GITHUB_OUTPUT
       - name: HTTP Request - Miqa Trigger
         uses: fjogeleit/http-request-action@v1.14.0
         with:
-          url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ env.CHECK_RUN_ID }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&gha_version=1.1.5&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
+          url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ steps.read_check_run_id.outputs.value }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&gha_version=1.1.5&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
           method: 'POST'
           timeout: 30000
           preventFailureOnNoResponse: true
           customHeaders: '{"Content-Type": "application/json", "app_key":"${{ inputs.MIQA_API_KEY }}"}'
-          data: '{"repo":"${{ inputs.REPOSITORY }}", "commit":"${{ env.NEW_SHA }}"}'
+          data: '{"repo":"${{ inputs.REPOSITORY }}", "commit":"${{ steps.read_new_sha.outputs.value }}"}'
