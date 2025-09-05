@@ -93,9 +93,17 @@ runs:
       - name: HTTP Request - Miqa Trigger
         uses: fjogeleit/http-request-action@v1.14.0
         with:
-          url: '${{ inputs.MIQA_ENDPOINT }}/trigger_test_auto/${{ inputs.TRIGGER_ID }}?app=gh&uri=${{ inputs.DOCKER_URI }}&allow_override=1&event_id=${{ steps.read_check_run_id.outputs.value }}&repo=${{ inputs.REPOSITORY }}&commit=${{ inputs.SHA }}&gha_version=1.1.7&specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}'
+          url: >-
+            ${{ inputs.MIQA_ENDPOINT }}/test_trigger/${{ inputs.TRIGGER_ID }}/execute?app=gh
+            &uri=${{ inputs.DOCKER_URI }}
+            &allow_override=1
+            &event_id=${{ steps.read_check_run_id.outputs.value }}
+            &repo=${{ inputs.REPOSITORY }}
+            &commit=${{ inputs.SHA }}
+            &gha_version=1.1.7
+            &specific_components=${{ inputs.COMPONENT_IDS }}${{ inputs.ADDITIONAL_INSTRUCTIONS }}
           method: 'POST'
           timeout: 30000
           preventFailureOnNoResponse: true
-          customHeaders: '{"Content-Type": "application/json", "app_key":"${{ inputs.MIQA_API_KEY }}"}'
+          customHeaders: '{"Content-Type": "application/json", "authorization":"Bearer ${{ inputs.MIQA_API_KEY }}"}'
           data: '{"repo":"${{ inputs.REPOSITORY }}", "commit":"${{ steps.read_new_sha.outputs.value }}"}'
